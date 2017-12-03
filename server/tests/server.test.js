@@ -1,3 +1,4 @@
+const assert = require('assert');
 const request = require('supertest');
 const expect = require('expect');
 const {ObjectID} = require('mongodb');
@@ -106,7 +107,50 @@ describe('GET /todo/:id', () => {
 
     it('should return a 404 for non-object ids', (done) => {
         request(app)
-                .get(`/todo/${todo[0]._id.toString() + 1}`)
+                .get(`/todo/${todo[0]._id.toString() + 'extra'}`)
+                .expect(404)
+                .end(done);
+    });
+});
+
+describe('DELETE /todo/:id', () => {
+    it('should remove a todo', (done) => {
+        let id = todo[1]._id.toString();
+
+        request(app)
+                .delete(`/todo/${id}`)
+                .expect(200)
+                .expect((res) => {
+                    expect(res.body.data.todo._id).toBe(id);
+                })
+                .end((err, res) => {
+                    if (err) {
+                        return done(err);
+                    }
+
+                    Todo.findById(id)
+                            .then((doc) => {
+                                assert.equal(doc, null);
+                                done();
+                            })
+                            .catch((err) => done(err));
+                });
+    });
+
+    it('should return 404 if todo not found', (done) => {
+        let id = new ObjectID().toString();
+
+        request(app)
+                .delete(`/todo/${id}`)
+                .expect(404)
+                .end(done);
+    });
+
+    it('should return 404 if object id is not valid', (done) => {
+        let id = new ObjectID().toString() + 'extra';
+
+        request(app)
+                .delete(`/todo/${id}`)
                 .expect(404)
                 .end(done);
     });
