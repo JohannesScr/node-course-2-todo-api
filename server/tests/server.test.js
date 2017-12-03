@@ -13,7 +13,9 @@ const todo = [
     },
     {
         _id: new ObjectID(),
-        text: 'Second test todo'
+        text: 'Second test todo',
+        completed: true,
+        completed_at: 123
     }
 ];
 
@@ -152,6 +154,48 @@ describe('DELETE /todo/:id', () => {
         request(app)
                 .delete(`/todo/${id}`)
                 .expect(404)
+                .end(done);
+    });
+});
+
+describe('PATCH /todo/:id', () => {
+    it('should update update the todo', (done) => {
+        let id = todo[0]._id.toString();
+
+        let body = {
+            text: 'Patch update text',
+            completed: true
+        };
+
+        request(app)
+                .patch(`/todo/${id}`)
+                .send(body)
+                .expect(200)
+                .expect((res) => {
+                    assert.equal(res.body.data.todo.text, body.text);
+                    assert.equal(res.body.data.todo.completed, true);
+                    assert.equal(typeof res.body.data.todo.completed_at, 'number');
+                })
+                .end(done);
+    });
+
+    it('should clear completed at when todo is not completed', (done) => {
+        let id = todo[1]._id.toString();
+
+        let body = {
+            text: 'Patch update text again',
+            completed: false
+        };
+
+        request(app)
+                .patch(`/todo/${id}`)
+                .send(body)
+                .expect(200)
+                .expect((res) => {
+                    assert.equal(res.body.data.todo.text, body.text);
+                    assert.equal(res.body.data.todo.completed, false);
+                    assert.equal(res.body.data.todo.completed_at, null);
+                })
                 .end(done);
     });
 });

@@ -36,7 +36,6 @@ app.post('/todo', (req, res) => {
                 res.status(req.result.http_code).send(req.result);
             });
 });
-
 app.get('/todo', (req, res) => {
     Todo.find()
             .then((docs) => {
@@ -53,7 +52,6 @@ app.get('/todo', (req, res) => {
                 res.status(req.result.http_code).send(req.result);
             });
 });
-
 app.get('/todo/:id', (req, res) => {
     let id;
 
@@ -91,7 +89,6 @@ app.get('/todo/:id', (req, res) => {
                 req.result.errors.push('Request must have a valid id' + err.message);
             });
 });
-
 app.delete('/todo/:id', (req, res) => {
     let id;
 
@@ -128,7 +125,6 @@ app.delete('/todo/:id', (req, res) => {
                 req.result.errors.push('Request must have a valid id' + err.message);
             });
 });
-
 app.patch('/todo/:id', (req, res) => {
     let id;
 
