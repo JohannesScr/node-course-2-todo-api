@@ -259,11 +259,10 @@ describe('POST /user', () => {
     });
 
     it('should not create user if email in use', (done) => {
-        let email = 'jenny@example.com';
         let password = '123bmn!';
 
         let body = {
-            email,
+            email: user[0].email,
             password
         };
 
