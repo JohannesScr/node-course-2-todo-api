@@ -1,10 +1,11 @@
 const Express = require('express');
 const body_parser = require('body-parser');
+const {ObjectID} = require('mongodb');
 
-let server_settings_service = require('./server.settings');
-let {mongoose} = require('./db/mongoose');
-let {Todo} = require('./model/todo');
-let {User} = require('./model/user');
+const server_settings_service = require('./server.settings');
+const {mongoose} = require('./db/mongoose');
+const {Todo} = require('./model/todo');
+const {User} = require('./model/user');
 
 const app = Express();
 
@@ -50,6 +51,42 @@ app.get('/todo', (req, res) => {
                 req.result.errors.push(err.message);
 
                 res.status(req.result.http_code).send(req.result);
+            });
+});
+
+app.get('/todo/:id', (req, res) => {
+    let id;
+    if (!req.params.id) {
+        req.result.http_code = 400;
+        req.result.message = 'Bad Request';
+        req.result.errors.push('Request must have a params.id');
+    } else if (!ObjectID.isValid(req.params.id)) {
+        req.result.http_code = 404;
+        req.result.message = 'Not Found';
+        req.result.errors.push('Request must have a valid id');
+
+    } else {
+        id = req.params.id;
+    }
+
+    if (req.result.errors.length > 0) {
+        res.status(req.result.http_code).send(req.result);
+    }
+
+    Todo.findById(id)
+            .then((doc) => {
+                if (!doc) {
+                    req.result.http_code = 404;
+                    req.result.message = 'Not Found';
+                    res.status(req.result.http_code).send(req.result);
+                }
+                req.result.data.todo = doc;
+                res.send(req.result);
+            })
+            .catch((err) => {
+                req.result.http_code = 400;
+                req.result.message = 'Not Found' + err.message;
+                req.result.errors.push('Request must have a valid id' + err.message);
             });
 });
 
