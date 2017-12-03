@@ -13,5 +13,6 @@ exports.add_result_object = (req, res, next) => {
         data: {},
         errors: []
     };
+    req.data = {};
     next();
 };

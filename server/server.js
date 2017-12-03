@@ -8,6 +8,7 @@ const server_settings_service = require('./server.settings');
 const {mongoose} = require('./db/mongoose');
 const {Todo} = require('./model/todo');
 const {User} = require('./model/user');
+let auth_service = require('./middleware/authenticate');
 
 const app = Express();
 const PORT = process.env.PORT;
@@ -204,6 +205,14 @@ app.post('/user', (req, res) => {
                 res.status(req.result.http_code).send(req.result);
             });
 });
+app.get('/user/me', auth_service.authenticate, (req, res) => {
+    req.result.message = 'User found';
+    req.result.data.user = req.data.user;
+    res.send(req.result);
+});
+
+
+// #### LISTEN
 
 app.listen(PORT, () => {
     console.log(`Express App successful listening on port: ${PORT}`);
