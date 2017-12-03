@@ -42,3 +42,7 @@ app.post('/todo', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Express App successful listening on port: ${PORT}`);
 });
+
+module.exports = {
+    app
+};
