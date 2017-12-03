@@ -56,6 +56,7 @@ app.get('/todo', (req, res) => {
 
 app.get('/todo/:id', (req, res) => {
     let id;
+
     if (!req.params.id) {
         req.result.http_code = 400;
         req.result.message = 'Bad Request';
@@ -78,10 +79,48 @@ app.get('/todo/:id', (req, res) => {
                 if (!doc) {
                     req.result.http_code = 404;
                     req.result.message = 'Not Found';
-                    res.status(req.result.http_code).send(req.result);
+                    return res.status(req.result.http_code).send(req.result);
                 }
+                req.result.message = 'Record found';
                 req.result.data.todo = doc;
                 res.send(req.result);
+            })
+            .catch((err) => {
+                req.result.http_code = 400;
+                req.result.message = 'Not Found' + err.message;
+                req.result.errors.push('Request must have a valid id' + err.message);
+            });
+});
+
+app.delete('/todo/:id', (req, res) => {
+    let id;
+
+    if (!req.params.id) {
+        req.result.http_code = 400;
+        req.result.message = 'Bad Request';
+        req.result.errors.push('Request must have a params.id');
+    } else if (!ObjectID.isValid(req.params.id)) {
+        req.result.http_code = 404;
+        req.result.message = 'Not Found';
+        req.result.errors.push('Request must have a valid id');
+    } else {
+        id = req.params.id;
+    }
+
+    if (req.result.errors.length > 0) {
+        res.status(req.result.http_code).send(req.result);
+    }
+
+    Todo.findByIdAndRemove(id)
+            .then((doc) => {
+                if (!doc) {
+                    req.result.http_code = 404;
+                    req.result.message = 'No record found to delete';
+                    return res.status(req.result.http_code).send(req.result);
+                }
+                req.result.message = 'Record deleted successfully';
+                req.result.data.todo = doc;
+                res.status(req.result.http_code).send(req.result);
             })
             .catch((err) => {
                 req.result.http_code = 400;
