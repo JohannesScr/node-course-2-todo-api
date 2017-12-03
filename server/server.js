@@ -180,7 +180,30 @@ app.patch('/todo/:id', (req, res) => {
 });
 
 // #### USER
+app.post('/user', (req, res) => {
+    let user = new User({
+        email: req.body.email,
+        password: req.body.password
+    });
 
+    user.save()
+            .then(() => {
+                return user.generate_auth_token();
+            })
+            .then((token) => {
+                req.result.data.user = user;
+                req.result.message = 'Saved user successfully';
+                res.header('x-auth', token).send(req.result);
+            })
+            .catch((err) => {
+                console.log('Unable to save user: ', err);
+                req.result.http_code = 400;
+                req.result.message = 'Bad Request: ' + err.message;
+                req.result.errors.push(err.message);
+
+                res.status(req.result.http_code).send(req.result);
+            });
+});
 
 app.listen(PORT, () => {
     console.log(`Express App successful listening on port: ${PORT}`);
