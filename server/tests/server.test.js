@@ -5,28 +5,11 @@ const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../model/todo');
+const {User} = require('./../model/user');
+const {todo, seed_todo, user, seed_user} = require('./seed/seed');
 
-const todo = [
-    {
-        _id: new ObjectID(),
-        text: 'First test todo'
-    },
-    {
-        _id: new ObjectID(),
-        text: 'Second test todo',
-        completed: true,
-        completed_at: 123
-    }
-];
-
-beforeEach((done) => {
-    // clear all records in the database
-    Todo.remove({})
-            .then(() => {
-                return Todo.insertMany(todo);
-            })
-            .then(() => done());
-});
+beforeEach(seed_user);
+beforeEach(seed_todo);
 
 describe('POST /todo', () => {
     it('should create a new todo', (done) => {
@@ -197,5 +180,97 @@ describe('PATCH /todo/:id', () => {
                     assert.equal(res.body.data.todo.completed_at, null);
                 })
                 .end(done);
+    });
+});
+
+describe('GET /user/me', () => {
+    it('should return user if authenticated', (done) => {
+        request(app)
+                .get('/user/me')
+                .set('x-auth', user[0].tokens[0].token)
+                .expect(200)
+                .expect((res) => {
+                    assert.equal(res.body.data.user._id, user[0]._id.toString());
+                    assert.equal(res.body.data.user.email, user[0].email);
+                })
+                .end(done);
+    });
+
+    it('should return a 401 if not authenticated', (done) => {
+        request(app)
+                .get('/user/me')
+                .expect(401)
+                .expect((res) => {
+                    assert.deepEqual(res.body.data, {});
+                })
+                .end(done);
+    });
+});
+
+describe('POST /user', () => {
+    it('should create a user', (done) => {
+        let email = 'example@example.com';
+        let password = '123bmn!';
+
+        let body = {
+            email,
+            password
+        };
+
+        request(app)
+                .post('/user')
+                .send(body)
+                .expect(200)
+                .expect((res) => {
+                    assert.ok(res.headers['x-auth'], true);
+                    assert.ok(res.body.data.user._id, true);
+                    assert.ok(res.body.data.user._id, true);
+                })
+                .end((err) => {
+                    if (err) {
+                        done(err);
+                    }
+
+                    let query = {email};
+
+                    User.findOne(query)
+                            .then((user) => {
+                                assert.equal(user.email, email);
+                                assert.notEqual(user.password, password);
+                                done();
+                            });
+                });
+    });
+
+    it('should return validation errors if request invalid', (done) => {
+        let email = 'jennyaexample.com';
+        let password = 'abc';
+
+        let body = {
+            email,
+            password
+        };
+
+        request(app)
+                .post('/user')
+                .send(body)
+                .expect(400)
+                .end(done());
+    });
+
+    it('should not create user if email in use', (done) => {
+        let email = 'jenny@example.com';
+        let password = '123bmn!';
+
+        let body = {
+            email,
+            password
+        };
+
+        request(app)
+                .post('/user')
+                .send(body)
+                .expect(400)
+                .end(done());
     });
 });
