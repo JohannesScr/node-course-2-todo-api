@@ -129,6 +129,59 @@ app.delete('/todo/:id', (req, res) => {
             });
 });
 
+app.patch('/todo/:id', (req, res) => {
+    let id;
+
+    if (!req.params.id) {
+        req.result.http_code = 400;
+        req.result.message = 'Bad Request';
+        req.result.errors.push('Request must have a params.id');
+    } else if (!ObjectID.isValid(req.params.id)) {
+        req.result.http_code = 404;
+        req.result.message = 'Not Found';
+        req.result.errors.push('Request must have a valid id');
+    } else {
+        id = req.params.id;
+    }
+
+    if (req.result.errors.length > 0) {
+        res.status(req.result.http_code).send(req.result);
+    }
+
+    // let body = _.pick(req.body, ['text', 'completed']);
+    let body = {};
+    if (req.body.text) {
+        body.text = req.body.text
+    }
+    if (req.body.completed) {
+        body.completed = req.body.completed
+    }
+
+    if (typeof body.completed === 'boolean' && body.completed === true) {
+        body.completed_at = new Date().getTime();
+    } else {
+        body.completed = false;
+        body.completed_at = null;
+    }
+
+    Todo.findByIdAndUpdate(id, {$set: body}, {new: true})
+            .then((doc) => {
+                if (!doc) {
+                    req.result.http_code = 404;
+                    req.result.message = 'No record found to update';
+                    return res.status(req.result.http_code).send(req.result);
+                }
+                req.result.message = 'Record updated successfully';
+                req.result.data.todo = doc;
+                res.status(req.result.http_code).send(req.result);
+            })
+            .catch((err) => {
+                req.result.http_code = 400;
+                req.result.message = 'Not Found' + err.message;
+                req.result.errors.push('Request must have a valid id' + err.message);
+            });
+});
+
 // #### USER
 
 
