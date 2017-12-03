@@ -9,7 +9,7 @@ const {User} = require('./model/user');
 
 const app = Express();
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(body_parser.json());
 app.use(server_settings_service.log_url);
