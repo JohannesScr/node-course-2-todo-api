@@ -60,7 +60,7 @@ UserSchema.methods.generate_auth_token = function () {
             .then(() => token);
 };
 
-UserSchema.statics.findByToken = function (token) {
+UserSchema.statics.find_by_token = function (token) {
     // using a normal function to bind 'this'
     let User = this;
     let decoded;
@@ -79,6 +79,31 @@ UserSchema.statics.findByToken = function (token) {
     };
 
     return User.findOne(query);
+};
+
+UserSchema.statics.find_by_credentials = function (email, password) {
+    // using a normal function to bind 'this'
+    let User = this;
+    let query = {
+        email
+    };
+
+    return new Promise((resolve, reject) => {
+        User.findOne(query)
+                .then((user) => {
+                    if (!user) {
+                            reject('Invalid credentials')
+                    }
+
+                        bcrypt.compare(password, user.password, (err, result) => {
+                            if (result) {
+                                resolve(user);
+                            } else {
+                                reject('Invalid credentials');
+                            }
+                        });
+                });
+    });
 };
 
 UserSchema.pre('save', function (next) {

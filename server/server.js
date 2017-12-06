@@ -17,7 +17,32 @@ app.use(body_parser.json());
 app.use(server_settings_service.log_url);
 app.use(server_settings_service.add_result_object);
 
-// #### TODO
+// #### AUTH
+app.post('/login', (req, res) => {
+    let data = {
+        email: req.body.email,
+        password: req.body.password
+    };
+
+    User.find_by_credentials(data.email, data.password)
+            .then((user) => {
+                user.generate_auth_token()
+                        .then((token) => {
+                            req.result.data.user = user;
+                            req.result.message = 'Login successfully';
+                            res.header('x-auth', token).send(req.result);
+                        });
+            })
+            .catch((err) => {
+                console.log('Error => /login: ' + err);
+                req.result.http_code = 400;
+                req.result.message = 'Login failed';
+                req.result.errors.push(err.message);
+                res.status(req.result.http_code).send(req.result);
+            });
+});
+
+// #### TODOS
 app.post('/todo', (req, res) => {
     let todo = new Todo({
         text: req.body.text

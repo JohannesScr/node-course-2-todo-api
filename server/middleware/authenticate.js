@@ -3,7 +3,7 @@ const {User} = require('./../model/user');
 let authenticate = (req, res, next) => {
     let token = req.header('x-auth');
 
-    User.findByToken(token)
+    User.find_by_token(token)
             .then((user) => {
                 if (!user) {
                     return Promise.reject('Could not authenticate');
@@ -20,6 +20,6 @@ let authenticate = (req, res, next) => {
             });
 };
 
-module.exports ={
+module.exports = {
     authenticate
 };
