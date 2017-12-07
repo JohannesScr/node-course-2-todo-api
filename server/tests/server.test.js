@@ -195,8 +195,8 @@ describe('GET /user/me', () => {
                 .set('x-auth', user[0].tokens[0].token)
                 .expect(200)
                 .expect((res) => {
-                    assert.equal(res.body.data.user._id, user[0]._id.toString());
-                    assert.equal(res.body.data.user.email, user[0].email);
+                    expect(res.body.data.user._id).to.equal(user[0]._id.toString());
+                    expect(res.body.data.user.email).to.equal(user[0].email);
                 })
                 .end(done);
     });
@@ -333,6 +333,30 @@ describe('POST /login', () => {
                             })
                             .catch((err) => done(err));
 
+                });
+    });
+});
+
+describe('DELETE /logout', () => {
+    it('should remove auth token on logout', (done) => {
+        let token = user[0].tokens[0].token;
+
+        request(app)
+                .delete('/logout')
+                .set('x-auth', token)
+                .expect(200)
+                .expect((res) => {
+                    assert.notExists(res.headers['x-auth']);
+                })
+                .end((err, res) => {
+                    if (err) return done(err);
+
+                    User.findById(user[1]._id)
+                            .then((user) => {
+                                assert.notExists(user.tokens[0]);
+                                done();
+                            })
+                            .catch((err) => done(err));
                 });
     });
 });
