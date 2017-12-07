@@ -64,6 +64,20 @@ UserSchema.methods.generate_auth_token = function () {
             .then(() => token);
 };
 
+UserSchema.methods.remove_token = function (token) {
+    let user = this;
+
+    let query = {
+        $pull: {
+            tokens: {
+                token
+            }
+        }
+    };
+
+    return user.update(query);
+};
+
 UserSchema.statics.find_by_token = function (token) {
     // using a normal function to bind 'this'
     let User = this;

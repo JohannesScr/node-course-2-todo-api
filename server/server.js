@@ -42,6 +42,23 @@ app.post('/login', (req, res) => {
                 res.status(req.result.http_code).send(req.result);
             });
 });
+app.delete('/logout', auth_service.authenticate, (req, res) => {
+    req.data.user.remove_token(req.data.token)
+            .then(() => {
+                req.result.message = 'Logged out successfully.';
+                res.send(req.result);
+            })
+            .catch((err) => {
+                err.function_path = __dirname + '/user.remove_token';
+                console.log('Error => /user.remove_token: ' + err);
+
+                req.result.http_code = 500;
+                req.result.message = 'Internal Server Error => /user.remove_token: ' + err.message;
+                req.result.errors.pus('Internal Server Error => /user.remove_token: ' + err.message);
+
+                res.status(req.result.http_code).send(req.result);
+            });
+});
 
 // #### TODOS
 app.post('/todo', (req, res) => {
