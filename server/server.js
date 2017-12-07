@@ -61,9 +61,10 @@ app.delete('/logout', auth_service.authenticate, (req, res) => {
 });
 
 // #### TODOS
-app.post('/todo', (req, res) => {
+app.post('/todo', auth_service.authenticate, (req, res) => {
     let todo = new Todo({
-        text: req.body.text
+        text: req.body.text,
+        _creator: req.data.user._id
     });
 
     todo.save()
@@ -81,8 +82,13 @@ app.post('/todo', (req, res) => {
                 res.status(req.result.http_code).send(req.result);
             });
 });
-app.get('/todo', (req, res) => {
-    Todo.find()
+app.get('/todo', auth_service.authenticate, (req, res) => {
+
+    let query = {
+        _creator: req.data.user._id
+    };
+
+    Todo.find(query)
             .then((docs) => {
                 req.result.data.todo = docs;
                 req.result.message = 'Found Todo';
@@ -97,7 +103,7 @@ app.get('/todo', (req, res) => {
                 res.status(req.result.http_code).send(req.result);
             });
 });
-app.get('/todo/:id', (req, res) => {
+app.get('/todo/:id', auth_service.authenticate, (req, res) => {
     let id;
 
     if (!req.params.id) {
@@ -117,7 +123,12 @@ app.get('/todo/:id', (req, res) => {
         res.status(req.result.http_code).send(req.result);
     }
 
-    Todo.findById(id)
+    let query = {
+        _id: id,
+        _creator: req.data.user._id
+    };
+
+    Todo.findOne(query)
             .then((doc) => {
                 if (!doc) {
                     req.result.http_code = 404;
@@ -134,7 +145,7 @@ app.get('/todo/:id', (req, res) => {
                 req.result.errors.push('Request must have a valid id' + err.message);
             });
 });
-app.delete('/todo/:id', (req, res) => {
+app.delete('/todo/:id', auth_service.authenticate, (req, res) => {
     let id;
 
     if (!req.params.id) {
@@ -153,7 +164,12 @@ app.delete('/todo/:id', (req, res) => {
         res.status(req.result.http_code).send(req.result);
     }
 
-    Todo.findByIdAndRemove(id)
+    let query = {
+        _id: id,
+        _creator: req.data.user._id
+    };
+
+    Todo.findOneAndRemove(query)
             .then((doc) => {
                 if (!doc) {
                     req.result.http_code = 404;
@@ -170,7 +186,7 @@ app.delete('/todo/:id', (req, res) => {
                 req.result.errors.push('Request must have a valid id' + err.message);
             });
 });
-app.patch('/todo/:id', (req, res) => {
+app.patch('/todo/:id', auth_service.authenticate, (req, res) => {
     let id;
 
     if (!req.params.id) {
@@ -205,7 +221,12 @@ app.patch('/todo/:id', (req, res) => {
         body.completed_at = null;
     }
 
-    Todo.findByIdAndUpdate(id, {$set: body}, {new: true})
+    let query = {
+        _id: id,
+        _creator: req.data.user._id
+    };
+
+    Todo.findOneAndUpdate(query, {$set: body}, {new: true})
             .then((doc) => {
                 if (!doc) {
                     req.result.http_code = 404;

@@ -4,37 +4,6 @@ const jwt = require('jsonwebtoken');
 const {Todo} = require('./../../model/todo');
 const {User} = require('./../../model/user');
 
-// #################### TODOS ####################
-
-const todo = [
-    {
-        _id: new ObjectID(),
-        text: 'First test todo'
-    },
-    {
-        _id: new ObjectID(),
-        text: 'Second test todo',
-        completed: true,
-        completed_at: 123
-    }
-];
-
-const seed_todo = (done) => {
-    // clear all records in the database
-    Todo.remove({})
-            .then(() => {
-                // console.log('Begin seed todos');
-                Todo.insertMany(todo);
-                // console.log('End seed todos');
-            })
-            .then(() => done());
-};
-
-const clear_todo_collection = (done) => {
-    Todo.remove({})
-            .then(() => done());
-};
-
 // #################### USER ####################
 
 const user_one_id = new ObjectID();
@@ -52,10 +21,10 @@ const user = [{
     _id: user_two_id,
     email: 'jenny@example.com',
     password: 'Password1',
-    // tokens: [{
-    //     access: 'auth',
-    //     token: jwt.sign({_id: user_two_id, access: 'auth'}, 'abc123').toString()
-    // }]
+    tokens: [{
+        access: 'auth',
+        token: jwt.sign({_id: user_two_id, access: 'auth'}, 'abc123').toString()
+    }]
 }];
 
 const seed_user = (done) => {
@@ -73,8 +42,31 @@ const seed_user = (done) => {
             .then(() => done());
 };
 
-const clear_user_collection = (done) => {
-    User.remove({})
+// #################### TODOS ####################
+
+const todo = [
+    {
+        _id: new ObjectID(),
+        text: 'First test todo',
+        _creator: user_one_id
+    },
+    {
+        _id: new ObjectID(),
+        text: 'Second test todo',
+        completed: true,
+        completed_at: 123,
+        _creator: user_two_id
+    }
+];
+
+const seed_todo = (done) => {
+    // clear all records in the database
+    Todo.remove({})
+            .then(() => {
+                // console.log('Begin seed todos');
+                Todo.insertMany(todo);
+                // console.log('End seed todos');
+            })
             .then(() => done());
 };
 
@@ -83,8 +75,6 @@ const clear_user_collection = (done) => {
 module.exports = {
     todo,
     seed_todo,
-    clear_todo_collection,
     user,
     seed_user,
-    clear_user_collection
 };
