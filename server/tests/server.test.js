@@ -1,15 +1,20 @@
-const assert = require('assert');
+// const assert = require('assert');
 const request = require('supertest');
-const expect = require('expect');
+// const expect = require('expect');
+const chai = require('chai');
+const expect = chai.expect;
+const assert = chai.assert;
 const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../model/todo');
 const {User} = require('./../model/user');
-const {todo, seed_todo, user, seed_user} = require('./seed/seed');
+const {todo, seed_todo, clear_todo_collection, user, seed_user, clear_user_collection} = require('./seed/seed');
 
 beforeEach(seed_user);
+// afterEach(clear_user_collection);
 beforeEach(seed_todo);
+// afterEach(clear_todo_collection);
 
 describe('POST /todo', () => {
     it('should create a new todo', (done) => {
@@ -22,7 +27,7 @@ describe('POST /todo', () => {
                 .send(body)
                 .expect(200)
                 .expect((res) => {
-                    expect(res.body.data.todo.text).toBe(body.text);
+                    expect(res.body.data.todo.text).to.equal(body.text);
                 })
                 .end((err, res) => {
                     if (err) {
@@ -31,8 +36,8 @@ describe('POST /todo', () => {
 
                     Todo.find({text: body.text})
                             .then((todo) => {
-                                expect(todo.length).toBe(1);
-                                expect(todo[0].text).toBe(body.text);
+                                expect(todo.length).to.equal(1);
+                                expect(todo[0].text).to.equal(body.text);
                                 done();
                             })
                             .catch((err) => done(err));
@@ -51,7 +56,7 @@ describe('POST /todo', () => {
 
                     Todo.find()
                             .then((todo) => {
-                                expect(todo.length).toBe(2);
+                                expect(todo.length).to.equal(2);
                                 done();
                             })
                             .catch((err) => done(err));
@@ -65,7 +70,7 @@ describe('GET /todo', () => {
                 .get('/todo')
                 .expect(200)
                 .expect((res) => {
-                    expect(res.body.data.todo.length).toBe(2)
+                    expect(res.body.data.todo.length).to.equal(2)
                 })
                 .end(done);
     });
@@ -77,7 +82,7 @@ describe('GET /todo/:id', () => {
                 .get(`/todo/${todo[0]._id.toString()}`)
                 .expect(200)
                 .expect((res) => {
-                    expect(res.body.data.todo.text).toBe(todo[0].text);
+                    expect(res.body.data.todo.text).to.equal(todo[0].text);
                 })
                 .end(done);
     });
@@ -106,7 +111,7 @@ describe('DELETE /todo/:id', () => {
                 .delete(`/todo/${id}`)
                 .expect(200)
                 .expect((res) => {
-                    expect(res.body.data.todo._id).toBe(id);
+                    expect(res.body.data.todo._id).to.equal(id);
                 })
                 .end((err, res) => {
                     if (err) {
@@ -115,7 +120,7 @@ describe('DELETE /todo/:id', () => {
 
                     Todo.findById(id)
                             .then((doc) => {
-                                assert.equal(doc, null);
+                                expect(doc).to.equal(null);
                                 done();
                             })
                             .catch((err) => done(err));
@@ -142,7 +147,7 @@ describe('DELETE /todo/:id', () => {
 });
 
 describe('PATCH /todo/:id', () => {
-    it('should update update the todo', (done) => {
+    it('should update the todo', (done) => {
         let id = todo[0]._id.toString();
 
         let body = {
@@ -155,9 +160,9 @@ describe('PATCH /todo/:id', () => {
                 .send(body)
                 .expect(200)
                 .expect((res) => {
-                    assert.equal(res.body.data.todo.text, body.text);
-                    assert.equal(res.body.data.todo.completed, true);
-                    assert.equal(typeof res.body.data.todo.completed_at, 'number');
+                    expect(res.body.data.todo.text).to.equal(body.text);
+                    expect(res.body.data.todo.completed).to.equal(true);
+                    expect(res.body.data.todo.completed_at).to.be.an('number');
                 })
                 .end(done);
     });
@@ -238,7 +243,8 @@ describe('POST /user', () => {
                                 assert.equal(user.email, email);
                                 assert.notEqual(user.password, password);
                                 done();
-                            });
+                            })
+                            .catch((err) => done(err));
                 });
     });
 
@@ -258,18 +264,75 @@ describe('POST /user', () => {
                 .end(done());
     });
 
-    it('should not create user if email in use', (done) => {
-        let password = '123bmn!';
+    // it('should not create user if email in use', (done) => {
+    //     let password = '123bmn!';
+    //
+    //     let body = {
+    //         email: user[0].email,
+    //         password
+    //     };
+    //
+    //     request(app)
+    //             .post('/user')
+    //             .send(body)
+    //             .expect(400)
+    //             .end(done());
+    // });
+});
 
+describe('POST /login', () => {
+    it('should login user and return auth token', (done) => {
         let body = {
-            email: user[0].email,
-            password
+            email: user[1].email,
+            password: user[1].password
         };
 
         request(app)
-                .post('/user')
+                .post('/login')
+                .send(body)
+                .expect(200)
+                .expect((res) => {
+                    assert.ok(res.headers['x-auth']);
+                })
+                .end((err, res) => {
+                    if (err) return done(err);
+
+                    User.findById(user[1]._id)
+                            .then((user) => {
+                                expect(user.tokens[0]).to.deep.include({
+                                    access: 'auth',
+                                    token: res.headers['x-auth']
+                                });
+                                done();
+                            })
+                            .catch((err) => done(err));
+
+                });
+    });
+
+    it('should reject invalid login', (done) => {
+        let body = {
+            email: user[1].email,
+            password: 'ILovePie'
+        };
+
+        request(app)
+                .post('/login')
                 .send(body)
                 .expect(400)
-                .end(done());
+                .expect((res) => {
+                    assert.notExists(res.headers['x-auth']);
+                })
+                .end((err, res) => {
+                    if (err) return done(err);
+
+                    User.findById(user[1]._id)
+                            .then((user) => {
+                                assert.notExists(user.tokens[0]);
+                                done();
+                            })
+                            .catch((err) => done(err));
+
+                });
     });
 });

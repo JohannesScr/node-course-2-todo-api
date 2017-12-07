@@ -26,7 +26,8 @@ app.post('/login', (req, res) => {
 
     User.find_by_credentials(data.email, data.password)
             .then((user) => {
-                user.generate_auth_token()
+
+                return user.generate_auth_token()
                         .then((token) => {
                             req.result.data.user = user;
                             req.result.message = 'Login successfully';

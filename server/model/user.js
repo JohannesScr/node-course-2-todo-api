@@ -51,10 +51,14 @@ UserSchema.methods.generate_auth_token = function () {
     let access = 'auth';
     let token = jwt.sign({_id: user._id.toString(), access}, 'abc123').toString();
 
+    // if (user.tokens[0].access && user.tokens[0].access) {
+    //     user.tokens[0].token = token;
+    // } else {
     user.tokens.push({
         access,
         token
     });
+    // }
 
     return user.save()
             .then(() => token);
@@ -64,7 +68,6 @@ UserSchema.statics.find_by_token = function (token) {
     // using a normal function to bind 'this'
     let User = this;
     let decoded;
-
 
     try {
         decoded = jwt.verify(token, 'abc123');
@@ -92,16 +95,16 @@ UserSchema.statics.find_by_credentials = function (email, password) {
         User.findOne(query)
                 .then((user) => {
                     if (!user) {
-                            reject('Invalid credentials')
+                        reject('Invalid credentials')
                     }
 
-                        bcrypt.compare(password, user.password, (err, result) => {
-                            if (result) {
-                                resolve(user);
-                            } else {
-                                reject('Invalid credentials');
-                            }
-                        });
+                    bcrypt.compare(password, user.password, (err, result) => {
+                        if (result) {
+                            resolve(user);
+                        } else {
+                            reject('Invalid credentials');
+                        }
+                    });
                 });
     });
 };

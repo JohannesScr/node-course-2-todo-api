@@ -23,8 +23,15 @@ const seed_todo = (done) => {
     // clear all records in the database
     Todo.remove({})
             .then(() => {
-                return Todo.insertMany(todo);
+                // console.log('Begin seed todos');
+                Todo.insertMany(todo);
+                // console.log('End seed todos');
             })
+            .then(() => done());
+};
+
+const clear_todo_collection = (done) => {
+    Todo.remove({})
             .then(() => done());
 };
 
@@ -45,20 +52,29 @@ const user = [{
     _id: user_two_id,
     email: 'jenny@example.com',
     password: 'Password1',
-    tokens: [{
-        access: 'auth',
-        token: jwt.sign({_id: user_two_id, access: 'auth'}, 'abc123').toString()
-    }]
+    // tokens: [{
+    //     access: 'auth',
+    //     token: jwt.sign({_id: user_two_id, access: 'auth'}, 'abc123').toString()
+    // }]
 }];
 
 const seed_user = (done) => {
     User.remove({})
             .then(() => {
-                let user_one = new User(user[0]).save();
-                let user_two = new User(user[1]).save();
+                // console.log('Begin seed user');
+                return new Promise((resolve, reject) => {
+                    let user_one = new User(user[0]).save();
+                    let user_two = new User(user[1]).save();
+                    // console.log('End seed user');
+                    resolve([user_one, user_two]);
+                });
 
-                return Promise.all([user_one, user_two]);
             })
+            .then(() => done());
+};
+
+const clear_user_collection = (done) => {
+    User.remove({})
             .then(() => done());
 };
 
@@ -67,6 +83,8 @@ const seed_user = (done) => {
 module.exports = {
     todo,
     seed_todo,
+    clear_todo_collection,
     user,
-    seed_user
+    seed_user,
+    clear_user_collection
 };
