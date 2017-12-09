@@ -49,7 +49,7 @@ UserSchema.methods.generate_auth_token = function () {
     // using a normal function to bind 'this'
     let user = this;
     let access = 'auth';
-    let token = jwt.sign({_id: user._id.toString(), access}, 'abc123').toString();
+    let token = jwt.sign({_id: user._id.toString(), access}, process.env.JWT_SECRET).toString();
 
     // if (user.tokens[0].access && user.tokens[0].access) {
     //     user.tokens[0].token = token;
@@ -84,7 +84,7 @@ UserSchema.statics.find_by_token = function (token) {
     let decoded;
 
     try {
-        decoded = jwt.verify(token, 'abc123');
+        decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (err) {
         return Promise.reject('Could not authenticate');
     }
